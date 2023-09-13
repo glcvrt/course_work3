@@ -1,54 +1,38 @@
 import json
+from datetime import datetime
 
-def opener(file_txt):
-    '''открывает файл и загружает его как список всех операций'''
-    with open(file_txt, "r", encoding='utf-8') as file:
+
+def read_json(name_file):
+    '''Функция прочтения json-файла'''
+    with open(name_file, "r", encoding='utf-8') as file:
         read_file = file.read()
         data = json.loads(read_file)
     return data
 
+def filter_by_status(dictionary_list):
+    '''Фильтрация списка словарей по статусу '''
+    filter_status_list = []
+    for operations in dictionary_list:
+        if "state" in operations and operations["state"] == "EXECUTED":
+            filter_status_list.append(operations)
+    return filter_status_list
 
-def sorting(list_operations):
-    '''возвращает 5 последних операций'''
+def sort_by_data(dictionary_list, number_of_operations):
+    '''Сортировка словарей списка по дате'''
+    dictionary_list = sorted(dictionary_list, key=lambda x: x["date"], reverse=True)
+    return dictionary_list[:number_of_operations]
 
-    sorted_list = []
-
-    final_list = []
-
-    for operations in list_operations: #type: operations:dict
-
-        if operations.get('date', False):
-            item = operations['date'][:10] + " " +str(list_operations.index(operations))
-            if operations["state"] == "EXECUTED":
-                sorted_list.append(item)
-
-    sorted_list = sorted(sorted_list, reverse=True)
-    sorted_list = sorted_list[:5]
-
-    for date in sorted_list:
-        ind = int(date[-2:])
-        final_list.append(list_operations[ind])
-    return final_list
-
-
-def formating(operations):
-    '''форматирует операцию и возвращает её в нужном виде'''
-    date = operations["date"][8:10] + "." + operations["date"][5:7] + "." + operations["date"][:4]
-    description = operations["description"]
-
-    if operations.get('from', False):
-        s = operations["from"]
-        name_point = s[:s.rfind(" ")]
-        point = s[s.rfind(" ") + 1:]
-        f_point = point[:4] + ' ' + point[4:6] + '** **** ' + point[-4:]
-        from_oper = name_point + ' ' + f_point + ' ->'
-    else:
-        from_oper = ''
-
-    to = operations["to"]
-    to_point = to[to.rfind(' '):]
-    to_point = to[:to.rfind(' ')] + ' ' + '**' + to_point[-4:]
-
-    amount = operations["operationAmount"]["amount"]
-    currency = operations["operationAmount"]["currency"]["name"]
-    return f"{date} {description}\n{from_oper} {to_point}\n{amount} {currency}"
+def formatted_operation(operation):
+    '''форматирование операции'''
+    date = datetime.strptime(operation["date"], "%Y-%m-%dT%H:%M:%S.%f").strftime("%d.%m.%Y")
+    description = operation["description"]
+    to = operation["to"]
+    to = to.replace(to[to.index(" ")+1:-4], "**")
+    amount = operation["operationAmount"]["amount"]
+    name = operation['operationAmount']["currency"]["name"]
+    if "from" in operation:
+        where = operation["from"]
+        where = where.replace(where[where.rfind(" ")+7:-4], "** **** ")
+        where = where[:where.find(" ")+5] + ' ' + where[where.find(" ")+5:]
+        return f'{date} {description}\n{where} -> {to}\n{amount} {name}'
+    return f"{date} {description}\n{to}\n{amount} {name}"

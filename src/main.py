@@ -1,21 +1,12 @@
-import json
-from utils import opener, sorting, formating
+from utils import formatted_operation, sort_by_data, read_json, filter_by_status
 
 
-def main(file):
-    final_list = []
-    list_operations = opener(file)
-
-    intermediate_list = sorting(list_operations)
-
-    for operation in intermediate_list:
-        operation = formating(operation)
-        final_list.append(operation)
-        print(operation)
+def main(file, number_of_operations):
+    data = read_json(file)
+    data = filter_by_status(data)
+    data = sort_by_data(data, number_of_operations)
+    for operation in data:
+        print(formatted_operation(operation))
         print()
 
-    return final_list
-
-
-
-print(main("..//operations.json"))
+main("../operations.json", 5)
